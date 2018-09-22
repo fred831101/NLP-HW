@@ -4,6 +4,7 @@ import NGram
 import math
 from sklearn.metrics.pairwise import cosine_similarity as dist
 from sklearn.linear_model import SGDClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 from gensim.models.word2vec import Word2Vec
 import gensim.downloader as api
@@ -65,7 +66,7 @@ def Preprocess(Train_Trump = "../train/trump.txt", Train_Obama = "../train/obama
     Paragraphs_Obama = NGram.corpora_preprocess(Train_Obama)
     P_Vecs_Obama = np.array([Get_Vector(p) for p in Paragraphs_Obama])
     X = np.concatenate((P_Vecs_Trump,P_Vecs_Obama))
-    Y = np.concatenate((np.ones([3000,]),np.zeros([3000,])))
+    Y = np.concatenate((np.ones([3100,]),np.zeros([3100,])))
     return X,Y
 
 def Train_SGD(Outpath = '../Output/sgd.csv'):
@@ -75,6 +76,18 @@ def Train_SGD(Outpath = '../Output/sgd.csv'):
     X,Y = Preprocess()
     clf.fit(X,Y)
     results = clf.predict(P_Vecs_test)
+    Write_Result(OutPath, results)
+
+def Train_RandomForest(Outpath = '../Output/forest2.csv', dp =50):
+    clf = RandomForestClassifier(max_depth=dp, random_state=0)
+    Paragraphs_test = NGram.corpora_preprocess("../test/test.txt")
+    P_Vecs_test = np.array([Get_Vector(p) for p in Paragraphs_test[:-1]])
+    X,Y = Preprocess()
+    clf.fit(X,Y)
+    results = clf.predict(P_Vecs_test)
+    Write_Result(Outpath, results)
+
+def Write_Result(Outpath, results):
     f = open(Outpath, 'w')
     f.write('Id,Prediction\n')
     for idx,label in enumerate(results):
